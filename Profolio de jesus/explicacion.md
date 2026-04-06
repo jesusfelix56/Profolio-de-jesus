@@ -41,21 +41,16 @@ Regla de lectura: cada archivo aparece una sola vez con su funcion real, lo que 
 
 ### `src/app/app.component.ts`
 - **Exporta:** `AppComponent`.
-- **Variables:**
-  - `isAuthenticated` (estado auth en UI),
-  - `_authSub?` (suscripcion para limpiar).
-- **Metodos:**
-  - `ngOnInit()` -> subscribe a `AuthService.isAuthenticated$`.
-  - `logout()` -> `AuthService.logout()` + `Router.navigate(['/contacts'])`.
-  - `ngOnDestroy()` -> unsubscribe.
+- **Rol actual:** componente raiz minimo (sin logica de auth ni layout de navegacion).
+- **Variables/metodos:** no define estado ni metodos propios.
 
 ### `src/app/app.component.html`
-- **Rol:** shell global.
-- **Contiene:** nav principal, boton login/logout condicional, `<router-outlet>`, `<p-toast>`.
-- **Eventos:** `(click)="logout()"`.
+- **Rol actual:** host minimo de infraestructura global.
+- **Contiene:** `<p-toast>` y `<router-outlet>`.
+- **Notas:** la navbar/header ya no vive aqui; se movio a `PublicLayoutComponent`.
 
 ### `src/app/app.component.scss`
-- **Rol:** estilos del shell (header/nav/main responsive).
+- **Rol actual:** estilo minimo del host (`:host { display: block; }`).
 
 ### `src/app/app.component.spec.ts`
 - **Rol:** test basico del root component (creacion y render de marca).
@@ -184,11 +179,44 @@ Regla de lectura: cada archivo aparece una sola vez con su funcion real, lo que 
 ## 7) Feature Public (listado de contactos)
 
 ### `src/app/features/public/public-routing.module.ts`
-- `''` redirige a `contacts`; `'contacts'` renderiza `ContactListComponent`.
+- **Estructura actual con layout anidado:**
+  - `path: ''` -> `PublicLayoutComponent`.
+  - **children**:
+    - `''` -> redirige a `contacts`,
+    - `'contacts'` -> `ContactListComponent`.
+- **Efecto real:** toda la experiencia publica renderiza dentro del layout compartido.
 
 ### `src/app/features/public/public.module.ts`
-- **Declara:** `ContactListComponent`, `ContactListFiltersComponent`, `ContactCardComponent`, `ContactProfileDialogComponent`.
+- **Declara:** `PublicLayoutComponent`, `ContactListComponent`, `ContactListFiltersComponent`, `ContactCardComponent`, `ContactProfileDialogComponent`.
 - **Importa:** `FormsModule` + PrimeNG para lista/filtros/dialog/tarjetas.
+
+### `src/app/features/public/components/public-layout/public-layout.component.ts`
+- **Rol:** shell real de la zona publica (header/nav/logout + contenedor de vistas hijas).
+- **Variables:**
+  - `isAuthenticated` (control visual de Login/Admin/Logout),
+  - `_authSub?` (suscripcion privada para cleanup).
+- **Dependencias DI:**
+  - `_authService: AuthService`,
+  - `_router: Router`.
+- **Metodos:**
+  - `ngOnInit()` -> subscribe a `AuthService.isAuthenticated$` y sincroniza `isAuthenticated`.
+  - `logout()` -> cierra sesion y navega a `/contacts`.
+  - `ngOnDestroy()` -> unsubscribe defensivo.
+
+### `src/app/features/public/components/public-layout/public-layout.component.html`
+- **Rol:** layout visual reutilizable de la zona publica.
+- **Contiene:**
+  - marca `Phone Book`,
+  - links `Contacts`, `Admin` (condicional por auth), `Login`/`Logout`,
+  - `<router-outlet>` hijo para renderizar `ContactListComponent`.
+- **Eventos y directivas:**
+  - `(click)="logout()"`,
+  - `routerLink`, `routerLinkActive`, `*ngIf`, `ng-template`.
+
+### `src/app/features/public/components/public-layout/public-layout.component.scss`
+- **Rol:** estilos del layout publico (header/top nav/content responsive).
+- **Dependencia SCSS:** `@use 'assets/styles/variables' as *`.
+- **Bloques clave:** `.layout`, `.top`, `.topInner`, `.nav`, `.content`, `.contentInner`.
 
 ### `src/app/features/public/components/contact-list/contact-list.component.ts`
 - **Rol:** contenedor de la vista publica.
@@ -388,7 +416,9 @@ Regla de lectura: cada archivo aparece una sola vez con su funcion real, lo que 
 2. Router raiz decide modulo por URL.
 3. Auth controla acceso admin con `authGuard`.
 4. `ContactService` mantiene estado reactivo de contactos y habla con backend mock.
-5. Public muestra listado/filtros/perfil (solo lectura + copy).
-6. Admin permite CRUD completo con validacion y dialogs.
-7. Toasts comunican feedback global.
-8. Estilos globales + assets cierran la experiencia visual.
+5. `AppComponent` solo hospeda `p-toast` + `router-outlet`.
+6. En zona publica, `PublicLayoutComponent` monta header/nav/logout y dentro renderiza `ContactListComponent`.
+7. Public muestra listado/filtros/perfil (solo lectura + copy).
+8. Admin permite CRUD completo con validacion y dialogs.
+9. Toasts comunican feedback global.
+10. Estilos globales + assets cierran la experiencia visual.
