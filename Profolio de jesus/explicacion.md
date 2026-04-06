@@ -913,3 +913,163 @@ En cada archivo se explica: flujo real, exportaciones, variables, metodos, entra
 
 ### `src/favicon.ico` (detalle)
 - icono mostrado por el navegador en la pestana.
+
+---
+
+## 12) Guia especifica de templates HTML (explicados paso a paso)
+
+Esta seccion complementa el detalle tecnico y se enfoca solo en **como funciona cada `.html` en ejecucion**: estructura visual, bindings, eventos y comunicacion con su `.ts`.
+
+### `src/app/app.component.html` (template)
+- **Objetivo del template:** montar infraestructura global y delegar todo el contenido a las rutas.
+- **Bloques:**
+  - `<p-toast position="top-right">`: contenedor global de notificaciones; escucha mensajes enviados por `MessageService` via `AppToastService`.
+  - `<router-outlet>`: punto donde Angular inserta el componente asociado a la ruta activa (`PublicModule`, `AuthModule`, `AdminModule`).
+- **Lectura funcional:** este HTML no contiene negocio; solo provee "slots" globales.
+
+### `src/app/features/auth/components/login/login.component.html` (template)
+- **Objetivo del template:** capturar credenciales y disparar autenticacion.
+- **Bloques visuales:**
+  - card/contenedor de login,
+  - campo usuario ligado a `username`,
+  - campo password ligado a `password`,
+  - mensaje condicional de error,
+  - boton de envio.
+- **Bindings y eventos clave:**
+  - `[(ngModel)]` sincroniza input <-> estado en `login.component.ts`.
+  - `*ngIf="errorMessage"` muestra feedback solo cuando hay fallo.
+  - `(click)` o submit llama `login()`.
+- **Lectura funcional:** el template solo emite intencion de login; la validacion/flujo real vive en el metodo `login()`.
+
+### `src/app/features/public/components/public-layout/public-layout.component.html` (template)
+- **Objetivo del template:** ser el shell de toda el area publica.
+- **Estructura:**
+  - header superior con marca,
+  - navegacion con links de rutas,
+  - zona de contenido con `<router-outlet>` hijo.
+- **Bindings/directivas importantes:**
+  - `routerLink` navega sin recarga completa.
+  - `routerLinkActive` marca visualmente la opcion activa.
+  - `*ngIf="isAuthenticated"` decide si mostrar `Admin`.
+  - bloque alterno (`ng-template`) para mostrar `Login` o `Logout`.
+  - `(click)="logout()"` ejecuta cierre de sesion.
+- **Lectura funcional:** este HTML no pinta datos de contactos; solo controla navegacion y acceso visual segun sesion.
+
+### `src/app/features/public/components/contact-list/contact-list.component.html` (template)
+- **Objetivo del template:** renderizar la experiencia publica de consulta.
+- **Flujo de render en pantalla:**
+  1. Muestra `app-contact-list-filters` y recibe cambios de busqueda/orden.
+  2. Si `loading` es `true`, muestra skeletons.
+  3. Si `loading` es `false`, renderiza `p-dataView` con `filteredContacts`.
+  4. Si lista filtrada queda vacia, muestra estado vacio y accion `Clear filters`.
+  5. Renderiza `app-contact-profile-dialog` para detalle del contacto seleccionado.
+- **Comunicacion con hijos:**
+  - filtros emiten cambios (`searchTermChange`, `selectedSortChange`),
+  - cards emiten `viewProfile`,
+  - dialogo emite cierre.
+- **Lectura funcional:** template de orquestacion visual; decide que bloque mostrar segun estado (`loading`, resultados, modal).
+
+### `src/app/features/public/components/contact-list/components/contact-list-filters/contact-list-filters.component.html` (template)
+- **Objetivo del template:** UI de filtros sin logica de negocio.
+- **Contiene:**
+  - input de busqueda,
+  - dropdown de orden.
+- **Bindings:**
+  - valor entrante por `@Input` (`searchTerm`, `selectedSort`, `sortOptions`),
+  - cambios salientes por `@Output` (`searchTermChange`, `selectedSortChange`).
+- **Lectura funcional:** componente presentacional reutilizable; no filtra directamente, solo emite cambios al padre.
+
+### `src/app/features/public/components/contact-list/components/contact-card/contact-card.component.html` (template)
+- **Objetivo del template:** representar un contacto en formato tarjeta.
+- **Contenido visual:**
+  - avatar (con fallback),
+  - nombre y `jobTitle`,
+  - telefono/email con accion de copia,
+  - boton `View profile`.
+- **Eventos clave:**
+  - botones de copy llaman `copyValue(...)`,
+  - boton de perfil llama `openProfile()` y emite al padre.
+- **Lectura funcional:** este HTML no abre modales por si mismo; solo dispara eventos hacia `contact-list.component.ts`.
+
+### `src/app/features/public/components/contact-list/components/contact-profile-dialog/contact-profile-dialog.component.html` (template)
+- **Objetivo del template:** mostrar ficha completa del contacto en modal.
+- **Bloques:**
+  - cabecera con identidad visual,
+  - campos de detalle (telefono, correo, direccion),
+  - acciones (copiar/cerrar).
+- **Bindings/eventos:**
+  - visibilidad controlada por `visible` (input),
+  - cierre notificado con `visibleChange` y `close`,
+  - botones de copia delegan en `copyValue(...)`.
+- **Lectura funcional:** modal controlado por el padre; el template refleja estado externo y emite intenciones.
+
+### `src/app/features/admin/components/admin-layout/admin-layout.component.html` (template)
+- **Objetivo del template:** shell privado de administracion.
+- **Estructura:**
+  - header con marca,
+  - nav con accesos `Contacts`/`Admin`,
+  - boton `Logout`,
+  - `<router-outlet>` para vistas admin hijas.
+- **Eventos:** boton logout invoca `logout()` y redirige fuera de admin.
+- **Lectura funcional:** mismo patron de shell que public, pero aplicado a rutas protegidas.
+
+### `src/app/features/admin/components/admin-contacts/admin-contacts.component.html` (template)
+- **Objetivo del template:** ensamblar todo el CRUD admin.
+- **Composicion de hijos:**
+  - `app-admin-contacts-toolbar`,
+  - `app-admin-contacts-table`,
+  - `app-contact-form-dialog`,
+  - `app-confirm-delete-dialog`.
+- **Flujo de datos:**
+  - el padre entrega estado por Inputs (datos, seleccion, visibilidad, modelo formulario),
+  - los hijos emiten eventos (crear, editar, borrar, filtrar, guardar, confirmar).
+- **Lectura funcional:** template "contenedor/orquestador"; concentra wiring de eventos entre UI y metodos del componente TS.
+
+### `src/app/features/admin/components/admin-contacts/components/admin-contacts-toolbar/admin-contacts-toolbar.component.html` (template)
+- **Objetivo del template:** barra de acciones globales del CRUD.
+- **Elementos:**
+  - boton Add,
+  - bloque bulk visible si hay seleccion,
+  - input de busqueda global,
+  - selector de columnas visibles.
+- **Eventos:**
+  - emitir alta de contacto,
+  - emitir borrado masivo,
+  - emitir cambios de filtro global y columnas.
+- **Lectura funcional:** no modifica tabla directamente; comunica acciones al contenedor.
+
+### `src/app/features/admin/components/admin-contacts/components/admin-contacts-table/admin-contacts-table.component.html` (template)
+- **Objetivo del template:** tabla editable con PrimeNG.
+- **Capacidades declaradas en HTML:**
+  - seleccion multiple de filas,
+  - columnas dinamicas segun configuracion,
+  - celdas editables por fila,
+  - acciones de editar/guardar/cancelar/eliminar.
+- **Eventos que salen al padre:**
+  - inicio/guardado/cancelacion de edicion,
+  - solicitud de borrado,
+  - cambios de seleccion.
+- **Lectura funcional:** define la interaccion rica de tabla; persistencia y validacion quedan en `admin-contacts.component.ts`.
+
+### `src/app/features/admin/components/dialogs/contact-form-dialog/contact-form-dialog.component.html` (template)
+- **Objetivo del template:** formulario modal de alta/edicion.
+- **Estructura:**
+  - campos de contacto (`firstName`, `lastName`, `phone`, `email`, `jobTitle`, `address`),
+  - mensajes de error por campo,
+  - acciones Save/Cancel.
+- **Bindings y validacion:**
+  - cambios de campos emiten `formModelChange`,
+  - estado de error se calcula con `isFieldInvalid(...)` + `getFieldError(...)`,
+  - submit emite `save`.
+- **Lectura funcional:** UI de captura validada; la decision final de persistir vive en el contenedor padre.
+
+### `src/app/features/admin/components/dialogs/confirm-delete-dialog/confirm-delete-dialog.component.html` (template)
+- **Objetivo del template:** confirmar accion destructiva.
+- **Bloques:**
+  - titulo/mensaje dinamicos,
+  - boton Cancel,
+  - boton Confirm (texto configurable).
+- **Eventos:**
+  - cerrar dialogo via `visibleChange`,
+  - confirmar via `confirm`.
+- **Lectura funcional:** presentacional puro; no borra por cuenta propia.
