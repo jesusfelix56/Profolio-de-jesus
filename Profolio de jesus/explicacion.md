@@ -121,15 +121,15 @@ Regla de lectura: cada archivo aparece una sola vez con su funcion real, lo que 
   - `_httpOptions` (headers JSON).
 - **Constructor:** llama `_loadContacts()`.
 - **Metodos publicos:**
-  - `getContacts()` -> stream de contactos.
+  - `getContacts()` -> stream de contactos (entrega copias por item para evitar mutaciones compartidas entre vistas).
   - `addContact(contact)` -> POST + refresh.
-  - `updateContact(contact)` -> PUT + refresh.
+  - `updateContact(contact)` -> PUT a `api/contacts/:id` + refresh.
   - `deleteContact(id)` -> DELETE + refresh.
 - **Metodos privados:**
-  - `_loadContacts()` -> GET y `next` del subject.
+  - `_loadContacts()` -> GET y `next` del subject con copia de datos.
   - `_refreshContacts<T>()` -> `tap` para recargar tras mutacion.
-  - `_handleError<T>(...)` -> fallback con `of(...)`.
-- **RxJS usado:** `BehaviorSubject`, `tap`, `catchError`, `of`.
+  - `_handleError<T>(...)` -> fallback con `of(...)` o relanza error segun el caso.
+- **RxJS usado:** `BehaviorSubject`, `tap`, `catchError`, `of`, `map`, `throwError`.
 
 ### `src/app/services/app-toast.service.ts`
 - **Exporta:** `AppToastService`.
@@ -340,7 +340,7 @@ Regla de lectura: cada archivo aparece una sola vez con su funcion real, lo que 
   - `openDeleteSelected()` -> configura borrado bulk.
   - `confirmDeleteDialog()` -> ejecuta single o bulk (`forkJoin`), limpia estado y notifica.
   - `onRowEditInit(contact)` -> clona fila.
-  - `onRowEditSave(contact)` -> valida y persiste; rollback si invalido.
+  - `onRowEditSave(contact)` -> valida y persiste; rollback si invalido o si falla backend, con toast de error.
   - `onRowEditCancel(contact)` -> restaura clon.
   - `updateFormModel(model)` -> sincroniza cambios del hijo.
   - `closeFormDialog()` -> cierra modal y limpia submit.
@@ -597,16 +597,17 @@ En cada archivo se explica: flujo real, exportaciones, variables, metodos, entra
   - `_httpOptions` (headers JSON)
 - **Constructor:** llama `_loadContacts()` para tener datos desde inicio.
 - **API publica:**
-  - `getContacts()` -> stream vivo de contactos.
+  - `getContacts()` -> stream vivo de contactos pero devolviendo copias para proteger el estado interno.
   - `addContact(contact)` -> POST y recarga lista.
-  - `updateContact(contact)` -> PUT y recarga.
+  - `updateContact(contact)` -> PUT a `api/contacts/:id` y recarga.
   - `deleteContact(id)` -> DELETE y recarga.
 - **Infra privada:**
-  - `_loadContacts()` -> GET + `next`.
+  - `_loadContacts()` -> GET + `next` con copias.
   - `_refreshContacts<T>()` -> operador `tap` reutilizable.
-  - `_handleError<T>()` -> fallback `of(...)`.
+  - `_handleError<T>()` -> fallback `of(...)` o relanzado para errores que debe manejar la UI.
 - **Comportamiento importante:**
   - cada mutacion recarga lista completa para mantener consistencia entre vistas public/admin.
+  - el stream evita compartir referencias mutables entre Admin y Public; asi, una edicion inline fallida no "ensucia" cards de la lista publica.
 
 ### `src/app/services/app-toast.service.ts` (detalle)
 - **Fachada de mensajes:**
@@ -826,7 +827,7 @@ En cada archivo se explica: flujo real, exportaciones, variables, metodos, entra
 - **Metodos clave:**
   - `openCreate()` + `save()` (alta),
   - `openDelete()`, `openDeleteSelected()`, `confirmDeleteDialog()` (borrado single/bulk),
-  - `onRowEditInit/Save/Cancel` (edicion inline con rollback),
+  - `onRowEditInit/Save/Cancel` (edicion inline con rollback y feedback de error en validacion/fallo de persistencia),
   - `onGlobalFilterChange()` (filtro global delegado por `ViewChild`).
 - **Conexiones:** `ContactService`, `AppToastService`, validadores, toolbar/tabla/dialogos.
 
