@@ -1,0 +1,108 @@
+Directorio Telefónico en Angular
+
+1. Objetivo
+
+Desarrollar una aplicación que permita gestionar un directorio telefónico, incluyendo búsqueda, visualización y administración de contactos.
+
+IMPORTANTE: Las funcionalidades de administración deben estar restringidas a usuarios autenticados.
+
+
+2. Funcionalidades generales de la aplicación
+
+Estas funcionalidades están disponibles para cualquier usuario:
+
+· Visualización de un listado de contactos.
+
+· Búsqueda de contactos por nombre o número de teléfono.
+
+Visualización de información básica de cada contacto:
+
+· Nombre
+
+· Número de teléfono
+
+· Email
+
+· Cargo
+
+Acceso al detalle completo de un contacto. Navegación entre las distintas vistas de la aplicación.
+
+
+3. Funcionalidades de usuario
+
+- Ver listado de contactos
+
+Los contactos deben mostrarse en una lista ordenada alfabéticamente por nombre. Debe existir la posibilidad de ordenar por:
+
+· Apellido
+
+· Número de teléfono
+
+· Cargo
+
+
+- Buscar contactos
+
+Debe existir un campo de búsqueda. La búsqueda debe permitir encontrar contactos por:
+
+· Nombre y apellidos
+
+· Número de teléfono
+
+La búsqueda debe ser sensible a mayúsculas y minúsculas. Los resultados deben mostrarse de forma clara.
+
+
+- Ver detalle de contacto
+
+Debe existir una opción para ver el detalle completo de un contacto. Se debe mostrar información adicional, como:
+
+· Dirección
+
+· Correo electrónico
+
+Debe ser posible volver al listado de contactos.
+
+
+4. Funcionalidades de administrador
+
+- Autenticación
+
+· Debe existir un sistema de inicio de sesión.
+
+· El acceso a funciones administrativas requiere autenticación previa.
+
+
+- Añadir contactos
+
+· Debe existir un formulario para crear nuevos contactos.
+
+· El formulario debe validar los campos obligatorios.
+
+· Se deben mostrar mensajes de error si los datos no son válidos.
+
+· El contacto creado debe aparecer en el listado.
+
+
+- Editar contactos
+
+· Debe existir una opción para editar contactos existentes.
+
+· El formulario de edición debe mostrar los datos actuales del contacto.
+
+· Se deben poder guardar los cambios realizados.
+
+
+- Eliminar contactos
+
+· Debe existir una opción para eliminar contactos.
+
+· Se debe solicitar confirmación antes de eliminar.
+
+· Tras la confirmación, el contacto debe desaparecer del listado.
+
+
+- Notas generales
+
+· La información debe mostrarse de forma clara y legible.
+
+· La interacción debe ser sencilla e intuitiva
